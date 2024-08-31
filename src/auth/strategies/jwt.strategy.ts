@@ -4,13 +4,17 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/user/models/user.model';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(@InjectModel('User') private userModel: Model<User>) {
+  constructor(
+    @InjectModel('User') private userModel: Model<User>,
+    private configService: ConfigService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: 'qwerty',
+      secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 
