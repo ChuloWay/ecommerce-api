@@ -8,33 +8,56 @@ import {
   Param,
   UseGuards,
   Patch,
+  NotFoundException,
+  ForbiddenException,
+  Query,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
-
 import { User } from '../decorators/user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth-guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'src/user/models/user.model';
-import { Product } from './models/product.model';
-import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ProductResponseDto } from './dto/product-response.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import mongoose from 'mongoose';
+import { Product } from './models/product.model';
+import { Response } from 'express';
 
+@ApiTags('products')
 @Controller('products')
 export class ProductController {
   constructor(private productService: ProductService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all approved products' })
+  @ApiOperation({
+    summary: 'Get all products with optional approval status filter',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Return all approved products',
+    description: 'Returns all products with optional filters applied',
     type: [ProductResponseDto],
   })
-  getApprovedProducts() {
-    return this.productService.getApprovedProducts();
+  async getAllProducts(
+    @Res() res: Response,
+    @Query('isApproved') isApproved?: string,
+  ) {
+    const approvedFilter = isApproved ? isApproved === 'true' : undefined;
+    const products = await this.productService.getAllProducts(approvedFilter);
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      data: products,
+      message: 'Products fetched successfully',
+    });
   }
 
   @Post()
@@ -46,8 +69,20 @@ export class ProductController {
     description: 'The product has been successfully created.',
     type: ProductResponseDto,
   })
-  createProduct(@Body() productData: CreateProductDto, @User() user) {
-    return this.productService.createProduct(productData, user._id);
+  async createProduct(
+    @Body() productData: CreateProductDto,
+    @User() user,
+    @Res() res: Response,
+  ) {
+    const product = await this.productService.createProduct(
+      productData,
+      user._id,
+    );
+    return res.status(HttpStatus.CREATED).json({
+      statusCode: HttpStatus.CREATED,
+      data: product,
+      message: 'Product created successfully',
+    });
   }
 
   @Get('my-products')
@@ -59,8 +94,13 @@ export class ProductController {
     description: "Return authenticated user's products",
     type: [ProductResponseDto],
   })
-  getUserProducts(@User() user) {
-    return this.productService.getUserProducts(user._id);
+  async getUserProducts(@User() user, @Res() res: Response) {
+    const products = await this.productService.getUserProducts(user._id);
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      data: products,
+      message: 'User products fetched successfully',
+    });
   }
 
   @Put(':id')
@@ -72,13 +112,31 @@ export class ProductController {
     description: 'The product has been successfully updated.',
     type: ProductResponseDto,
   })
-  updateProduct(
+  async updateProduct(
     @Param('id') productId: string,
     @Body() productData: UpdateProductDto,
-    @User() user,
+    @User() user: { _id: string; role: string },
+    @Res() res: Response,
   ) {
-    // Add logic to ensure the user owns the product
-    return this.productService.updateProduct(productId, productData);
+    this.validateObjectId(productId);
+    const product = await this.productService.findProductById(productId);
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    this.ensureOwnership(product, user._id);
+
+    const updatedProduct = await this.productService.updateProduct(
+      productId,
+      productData,
+    );
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      data: updatedProduct,
+      message: 'Product updated successfully',
+    });
   }
 
   @Delete(':id')
@@ -90,9 +148,21 @@ export class ProductController {
     description: 'The product has been successfully deleted.',
     type: ProductResponseDto,
   })
-  deleteProduct(@Param('id') productId: string, @User() user) {
-    // Add logic to ensure the user owns the product
-    return this.productService.deleteProduct(productId);
+  async deleteProduct(
+    @Param('id') productId: string,
+    @User() user,
+    @Res() res: Response,
+  ) {
+    this.validateObjectId(productId);
+    const product = await this.productService.findProductById(productId);
+    this.ensureOwnership(product, user._id);
+
+    await this.productService.deleteProduct(productId);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      message: 'Product deleted successfully',
+    });
   }
 
   @Patch(':id/approve')
@@ -105,8 +175,19 @@ export class ProductController {
     description: 'The product has been successfully approved.',
     type: ProductResponseDto,
   })
-  approveProduct(@Param('id') productId: string) {
-    return this.productService.approveProduct(productId);
+  async approveProduct(@Param('id') productId: string, @Res() res: Response) {
+    this.validateObjectId(productId);
+    const product = await this.productService.findProductById(productId);
+    if (product.isApproved) {
+      throw new ForbiddenException('Product is already approved.');
+    }
+    const approvedProduct = await this.productService.approveProduct(productId);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      data: approvedProduct,
+      message: 'Product approved successfully',
+    });
   }
 
   @Patch(':id/disapprove')
@@ -119,7 +200,33 @@ export class ProductController {
     description: 'The product has been successfully disapproved.',
     type: ProductResponseDto,
   })
-  disapproveProduct(@Param('id') productId: string) {
-    return this.productService.disapproveProduct(productId);
+  async disapproveProduct(
+    @Param('id') productId: string,
+    @Res() res: Response,
+  ) {
+    this.validateObjectId(productId);
+    const disapprovedProduct =
+      await this.productService.disapproveProduct(productId);
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
+      data: disapprovedProduct,
+      message: 'Product disapproved successfully',
+    });
+  }
+
+  private validateObjectId(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Invalid product ID.');
+    }
+  }
+
+  private ensureOwnership(product: Product, userId: string) {
+    const productOwnerId = product.owner.toString();
+    const currentUserId = userId.toString();
+
+    if (productOwnerId !== currentUserId) {
+      throw new ForbiddenException('You do not own this product.');
+    }
   }
 }

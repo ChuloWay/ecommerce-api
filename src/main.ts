@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as bodyParser from 'body-parser';
 import * as morgan from 'morgan';
+import * as compression from 'compression';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -14,7 +15,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1');
 
-  app.use(morgan('tiny'));
+  app.use(morgan('combined'));
 
   app.useGlobalPipes(
     new ValidationPipe({ stopAtFirstError: true, whitelist: true }),
@@ -25,6 +26,8 @@ async function bootstrap() {
       verify: (req, res, buffer) => (req['rawBody'] = buffer),
     }),
   );
+
+  app.use(compression());
 
   app.use(helmet());
 
