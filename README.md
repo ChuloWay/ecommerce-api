@@ -1,73 +1,95 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Basic E-Commerce System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Introduction
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This project is part of the Techinnover Backend Take-Home Assessment. It involves developing a simple e-commerce system using NestJS. The application allows unauthenticated users to view approved products, authenticated users to manage their products, and an admin to manage users and products.
 
-## Description
+## Project Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The goal of this project is to demonstrate the ability to design, develop, and document a backend API. The application is built using the NestJS framework, leveraging a NOSQL database (MongoDB) for data persistence, and is designed with role-based access control for different user types.
 
-## Installation
+## Technologies Used
 
-```bash
-$ npm install
-```
+- **NestJS:** A progressive Node.js framework for building efficient, scalable server-side applications.
+- **TypeScript:** A strongly typed programming language that builds on JavaScript.
+- **MongoDB:** A NoSQL database used for data persistence.
+- **TypeORM:** An Object-Relational Mapping (ORM) library for TypeScript and JavaScript.
+- **PassportJS:** Used for Authentication and Authorization.
+- **Swagger:** Integrated for comprehensive API documentation.
 
-## Running the app
+## Features
 
-```bash
-# development
-$ npm run start
+1. **User Management:**
+   - User registration and authentication (name, email, password).
+   - Role-based access control (User, Admin).
+   - Admins can view, ban, or unban users.
+   - Banned users are restricted from logging in or interacting with the system.
 
-# watch mode
-$ npm run start:dev
+2. **Product Management:**
+   - Authenticated users can create, update, and delete their own products (name, price, description, quantity).
+   - Admins can approve or disapprove products.
+   - Only approved products are visible to unauthenticated users.
+   - Unauthenticated users can browse approved products.
 
-# production mode
-$ npm run start:prod
-```
+## Implementation Details
 
-## Test
+The project is implemented using NodeJS, NestJs, TypeScript, and Mongoose for database interactions. The chosen database is MongoDB.
 
-```bash
-# unit tests
-$ npm run test
+## Getting Started
 
-# e2e tests
-$ npm run test:e2e
+### Prerequisites
 
-# test coverage
-$ npm run test:cov
-```
+Ensure the following packages are installed locally:
 
-## Support
+1. [MongoDB](https://www.mongodb.com/try/download/community)
+2. [Node (LTS Version)](https://nodejs.org)
+3. [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+4. NestJS CLI: `npm install @nestjs/cli -g`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Setup Steps
 
-## Stay in touch
+1. **Clone the repo**
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+   ```bash
+   git clone https://github.com/ChuloWay/ecommerce-api
+   ```
 
-## License
+2. **Create an env file:**
 
-Nest is [MIT licensed](LICENSE).
+   - Duplicate the `.env.example` file in the project root.
+   - Rename the duplicated file to `.env`.
+   - Open the `.env` file and set your variables as shown in the example file.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Ensure to fill in the necessary values in the `.env` file for a smooth configuration.
+
+3. **Start your server:**
+
+   ```bash
+   npm run start:dev
+   ```
+
+## API Documentation
+
+Explore the API documentation at -  [LOCALHOST] -- [Swagger](http://localhost:3000/api/v1/docs).
+
+![Ecommerce Api](./public/docs.png)
+
+
+## Acknowledgements
+
+Special thanks to:
+
+- NestJS
+- TypeScript
+- MongoDB
+- TypeORM
+- Passport JS
+- Websocket
+- Swagger
+
+## Conclusion
+Thank you for exploring our Ecommerce System! Feel free to provide feedback, report issues, or contribute to the project. Happy managing!
